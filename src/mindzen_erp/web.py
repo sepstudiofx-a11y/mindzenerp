@@ -48,6 +48,51 @@ async def list_leads(request: Request):
         "active_module": "crm"
     })
 
+@app.get("/crm/leads/new", response_class=HTMLResponse)
+async def new_lead_form(request: Request):
+    return templates.TemplateResponse("crm/lead_form.html", {
+        "request": request,
+        "lead": None,
+        "active_module": "crm"
+    })
+
+@app.post("/crm/leads", response_class=HTMLResponse)
+async def create_lead(request: Request):
+    form = await request.form()
+    data = dict(form)
+    # Convert types
+    if 'expected_revenue' in data:
+        data['expected_revenue'] = float(data['expected_revenue'])
+    
+    controller = LeadController(engine)
+    controller.create_lead(data)
+    
+    # Redirect to list view
+    from starlette.responses import RedirectResponse
+    return RedirectResponse(url="/crm/leads", status_code=303)
+
+@app.get("/crm/leads/{lead_id}", response_class=HTMLResponse)
+async def edit_lead_form(request: Request, lead_id: int):
+    controller = LeadController(engine)
+    lead = controller.get_lead(lead_id)
+    return templates.TemplateResponse("crm/lead_form.html", {
+        "request": request,
+        "lead": lead,
+        "active_module": "crm"
+    })
+
+@app.post("/crm/leads/{lead_id}", response_class=HTMLResponse)
+async def update_lead(request: Request, lead_id: int):
+    form = await request.form()
+    data = dict(form)
+    if 'expected_revenue' in data:
+        data['expected_revenue'] = float(data['expected_revenue'])
+        
+    controller = LeadController(engine)
+    controller.update_lead(lead_id, data)
+    
+    return RedirectResponse(url="/crm/leads", status_code=303)
+
 def start():
     uvicorn.run("mindzen_erp.web:app", host="0.0.0.0", port=8000, reload=True)
 
