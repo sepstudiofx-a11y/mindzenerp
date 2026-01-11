@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, Numeric, Date, Text
+from sqlalchemy import Column, String, Integer, ForeignKey, Numeric, Date, Text, Float
 from sqlalchemy.orm import relationship
 from mindzen_erp.core.orm import BaseModel
 from decimal import Decimal

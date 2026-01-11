@@ -18,7 +18,7 @@ class SaleController:
         """Create a new quotation/order"""
         # Generate sequence name if not provided
         if not data.get('name'):
-            count = SaleOrder.get_repository().count() + 1
+            count = len(SaleOrder.find_all()) + 1
             data['name'] = f"SO{str(count).zfill(3)}"
             
         order = SaleOrder.create(data)

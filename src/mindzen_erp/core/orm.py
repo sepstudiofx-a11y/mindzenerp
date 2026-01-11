@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from typing import Any, Dict, List, Optional, Type, TypeVar
 
 from sqlalchemy import create_engine, Column, Integer, DateTime, String, Boolean, Float, inspect
-from sqlalchemy.orm import sessionmaker, declarative_base, Session, ScopedSession
+from sqlalchemy.orm import sessionmaker, declarative_base, Session, scoped_session
 from sqlalchemy.sql import func
 from datetime import datetime
 
@@ -33,7 +33,7 @@ class Database:
         """Connect to PostgreSQL"""
         try:
             self.engine = create_engine(connection_string)
-            self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+            self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=self.engine)
             
             # Create tables
             SqlBase.metadata.create_all(bind=self.engine)
@@ -95,16 +95,30 @@ class BaseModel(SqlBase):
         db = Database()
         with db.get_session() as session:
             # Filter data to only include valid columns
-            valid_columns = {c.key for c in inspect(cls).mapper.column_attrs}
+            mapper = inspect(cls).mapper
+            valid_columns = {c.key for c in mapper.column_attrs}
+            valid_relationships = {r.key for r in mapper.relationships}
+            
             clean_data = {k: v for k, v in data.items() if k in valid_columns}
+            relation_data = {k: v for k, v in data.items() if k in valid_relationships}
             
             instance = cls(**clean_data)
-            session.add(instance)
-            session.flush() # Flush to get ID
-            session.refresh(instance)
             
-            # We need to detach the instance from the session to return it
-            # Otherwise accessing attributes outside the session context might fail
+            # Handle Relationships (assuming One-to-Many list of dicts)
+            for key, value in relation_data.items():
+                rel_prop = mapper.relationships[key]
+                rel_cls = rel_prop.mapper.class_
+                if isinstance(value, list):
+                    for item_data in value:
+                        if isinstance(item_data, dict):
+                             # Recursive creation not fully supported via same method due to session handling
+                             # So we instantiate directly
+                             rel_instance = rel_cls(**item_data)
+                             getattr(instance, key).append(rel_instance)
+                
+            session.add(instance)
+            session.commit() # Commit to save everything including children
+            session.refresh(instance)
             session.expunge(instance)
             return instance
 

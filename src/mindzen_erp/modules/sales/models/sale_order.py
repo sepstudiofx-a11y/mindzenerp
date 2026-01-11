@@ -23,7 +23,7 @@ class SaleOrder(BaseModel):
     opportunity_id = Column(Integer, nullable=True)  # Link to CRM
     
     # Relationships
-    lines = relationship("SaleOrderLine", back_populates="order", cascade="all, delete-orphan")
+    lines = relationship("SaleOrderLine", back_populates="order", cascade="all, delete-orphan", lazy="selectin")
 
     def confirm(self):
         """Confirm quotation to sales order"""
