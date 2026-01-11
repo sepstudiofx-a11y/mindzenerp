@@ -1,6 +1,7 @@
 {
     "name": "sales",
     "version": "1.0.0",
+    "status": "stable",
     "display_name": "Sales",
     "description": "Quotations, Sales Orders, and Invoicing",
     "author": "MindZen ERP",
