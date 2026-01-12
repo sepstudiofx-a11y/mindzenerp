@@ -31,6 +31,8 @@ python -m PyInstaller --noconfirm ^
     --hidden-import "sqlalchemy.sql.default_comparator" ^
     --hidden-import "mindzen_erp.modules.crm" ^
     --hidden-import "mindzen_erp.modules.sales" ^
+    --hidden-import "mindzen_erp.modules.inventory" ^
+    --hidden-import "mindzen_erp.core.company" ^
     --hidden-import "itsdangerous" ^
     --hidden-import "mindzen_erp.core.user" ^
     --hidden-import "mindzen_erp.core.auth_controller" ^
