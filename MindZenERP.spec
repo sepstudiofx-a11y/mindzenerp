@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('src/mindzen_erp/templates', 'mindzen_erp/templates'), ('src/mindzen_erp/static', 'mindzen_erp/static')]
+datas = [('src/mindzen_erp/templates', 'mindzen_erp/templates'), ('src/mindzen_erp/static', 'mindzen_erp/static'), ('src/mindzen_erp/modules', 'mindzen_erp/modules'), ('src/mindzen_erp/core', 'mindzen_erp/core')]
 binaries = []
 hiddenimports = ['uvicorn.logging', 'uvicorn.loops', 'uvicorn.loops.auto', 'uvicorn.protocols', 'uvicorn.protocols.http', 'uvicorn.protocols.http.auto', 'uvicorn.lifespan', 'uvicorn.lifespan.on', 'sqlalchemy.sql.default_comparator', 'mindzen_erp.modules.crm', 'mindzen_erp.modules.sales', 'mindzen_erp.modules.inventory', 'mindzen_erp.core.company', 'itsdangerous', 'mindzen_erp.core.user', 'mindzen_erp.core.auth_controller', 'mindzen_erp.core.config', 'mindzen_erp.core.engine', 'mindzen_erp.core.event_bus', 'mindzen_erp.core.hooks', 'mindzen_erp.core.module_registry', 'mindzen_erp.core.orm']
 tmp_ret = collect_all('mindzen_erp')

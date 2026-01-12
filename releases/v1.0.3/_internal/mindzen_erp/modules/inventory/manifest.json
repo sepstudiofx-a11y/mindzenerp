@@ -1,0 +1,11 @@
+{
+    "name": "inventory",
+    "version": "1.0.0",
+    "title": "Inventory Management",
+    "description": "Multi-warehouse inventory management with multi-UOM support for plastic manufacturing",
+    "author": "MindZen ERP",
+    "category": "Inventory",
+    "depends": [],
+    "installable": true,
+    "auto_install": false
+}

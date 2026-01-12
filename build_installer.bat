@@ -20,6 +20,8 @@ python -m PyInstaller --noconfirm ^
     --windowed ^
     --add-data "src/mindzen_erp/templates;mindzen_erp/templates" ^
     --add-data "src/mindzen_erp/static;mindzen_erp/static" ^
+    --add-data "src/mindzen_erp/modules;mindzen_erp/modules" ^
+    --add-data "src/mindzen_erp/core;mindzen_erp/core" ^
     --hidden-import "uvicorn.logging" ^
     --hidden-import "uvicorn.loops" ^
     --hidden-import "uvicorn.loops.auto" ^
