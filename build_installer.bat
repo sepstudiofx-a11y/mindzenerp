@@ -17,7 +17,7 @@ REM --hidden-import: Ensure engine and database drivers are included if missed b
 python -m PyInstaller --noconfirm ^
     --name "MindZenERP" ^
     --onedir ^
-    --windowed ^
+    --console ^
     --add-data "src/mindzen_erp/templates;mindzen_erp/templates" ^
     --add-data "src/mindzen_erp/static;mindzen_erp/static" ^
     --add-data "src/mindzen_erp/modules;mindzen_erp/modules" ^

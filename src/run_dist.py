@@ -40,7 +40,8 @@ def main():
         print("Press Ctrl+C to stop the server.")
         
         # Run uvicorn Programmatically
-        uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info", reload=False)
+        # use_colors=False is CRITICAL for PyInstaller windowed/noconsole mode
+        uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info", reload=False, use_colors=False)
         
     except Exception as e:
         print("\n" + "!"*50)
