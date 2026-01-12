@@ -1,0 +1,10 @@
+{
+    "name": "purchase",
+    "version": "1.0.0",
+    "description": "Purchase management with Saudi VAT compliance",
+    "author": "MindZen ERP Team",
+    "installable": true,
+    "dependencies": [
+        "inventory"
+    ]
+}

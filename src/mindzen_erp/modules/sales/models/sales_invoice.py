@@ -21,7 +21,8 @@ class SalesInvoice(BaseModel):
     subtotal = Column(Numeric(15, 2), default=0)
     discount_amount = Column(Numeric(15, 2), default=0)
     taxable_amount = Column(Numeric(15, 2), default=0)
-    vat_amount = Column(Numeric(15, 2), default=0)
+    tax_amount = Column(Numeric(15, 2), default=0) # Standard 15%
+    zakat_amount = Column(Numeric(15, 2), default=0) # 2.5% Provision
     round_off = Column(Numeric(10, 2), default=0)
     total_amount = Column(Numeric(15, 2), default=0)
     payment_status = Column(String(50), default='unpaid')
@@ -41,8 +42,9 @@ class SalesInvoice(BaseModel):
     def calculate_totals(self):
         self.subtotal = sum(item.amount for item in self.items)
         self.taxable_amount = self.subtotal - self.discount_amount
-        self.vat_amount = sum(item.vat_amount for item in self.items)
-        exact_total = self.taxable_amount + self.vat_amount
+        self.tax_amount = sum(item.tax_amount for item in self.items)
+        self.zakat_amount = self.taxable_amount * 0.025 # 2.5% Zakat Provision
+        exact_total = self.taxable_amount + self.tax_amount
         self.total_amount = round(exact_total, 2)
         self.round_off = self.total_amount - exact_total
         self.balance_amount = self.total_amount - self.paid_amount
@@ -64,8 +66,8 @@ class SalesInvoiceItem(BaseModel):
     discount_percent = Column(Numeric(5, 2), default=0)
     discount_amount = Column(Numeric(12, 2), default=0)
     taxable_amount = Column(Numeric(15, 2), default=0)
-    vat_rate = Column(Numeric(5, 2), default=15.00)
-    vat_amount = Column(Numeric(12, 2), default=0)
+    tax_rate = Column(Numeric(5, 2), default=15.00)
+    tax_amount = Column(Numeric(12, 2), default=0)
     total_amount = Column(Numeric(15, 2), default=0)
     
     invoice = relationship("SalesInvoice", back_populates="items")
@@ -76,5 +78,5 @@ class SalesInvoiceItem(BaseModel):
         self.amount = self.qty * self.rate
         self.discount_amount = self.amount * (self.discount_percent / 100)
         self.taxable_amount = self.amount - self.discount_amount
-        self.vat_amount = self.taxable_amount * (self.vat_rate / 100)
-        self.total_amount = self.taxable_amount + self.vat_amount
+        self.tax_amount = self.taxable_amount * (self.tax_rate / 100)
+        self.total_amount = self.taxable_amount + self.tax_amount

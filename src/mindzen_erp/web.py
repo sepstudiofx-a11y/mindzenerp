@@ -12,8 +12,9 @@ from mindzen_erp.core import Engine, ConfigManager
 from mindzen_erp.core.orm import Database
 from mindzen_erp.core.auth_controller import AuthController
 from mindzen_erp.modules.crm.controllers import LeadController
-from mindzen_erp.modules.sales.controllers import SalesOrderController, QuotationController, SalesInvoiceController
+from mindzen_erp.modules.sales.controllers import SalesOrderController, QuotationController, SalesInvoiceController, CustomerController
 from mindzen_erp.modules.inventory.controllers import ProductController, WarehouseController
+from mindzen_erp.modules.purchase.models.vendor import Vendor # Temporary direct import for placeholder
 
 # Initialize Engine & DB
 engine = Engine()
@@ -147,15 +148,41 @@ async def update_lead(request: Request, lead_id: int):
     controller.update_lead(lead_id, data)
     return RedirectResponse(url="/crm/leads", status_code=303)
 
+# --- MASTER SCREENS ---
+@app.get("/inventory/products", response_class=HTMLResponse)
+async def list_products(request: Request):
+    prod_controller = ProductController(engine)
+    products = prod_controller.list_products()
+    # Mock UOMs if none exist
+    uoms = [{"id": 1, "name": "Piece"}, {"id": 2, "name": "Carton"}]
+    return templates.TemplateResponse("inventory/products.html", {
+        "request": request, 
+        "products": products,
+        "uoms": uoms,
+        "active_module": "inventory"
+    })
+
+@app.get("/sales/customers", response_class=HTMLResponse)
+async def list_customers(request: Request):
+    controller = CustomerController(engine)
+    customers = controller.list_customers()
+    return templates.TemplateResponse("sales/customers.html", {
+        "request": request, 
+        "customers": customers,
+        "active_module": "sales"
+    })
+
 # --- SALES ROUTES ---
 @app.get("/sales", response_class=HTMLResponse)
-@app.get("/sales/quotations", response_class=HTMLResponse)
-async def list_quotations(request: Request):
-    controller = QuotationController(engine)
-    quotations = controller.list_quotations()
-    return templates.TemplateResponse("sales/quotations.html", {
-        "request": request, 
-        "orders": quotations, # Keeping variable name for template compatibility
+@app.get("/sales/invoice/new", response_class=HTMLResponse)
+async def new_invoice_form(request: Request):
+    prod_controller = ProductController(engine)
+    cust_controller = CustomerController(engine)
+    return templates.TemplateResponse("sales/invoice_form.html", {
+        "request": request,
+        "products": prod_controller.list_products(),
+        "customers": cust_controller.list_customers(),
+        "date_today": date.today().strftime("%Y-%m-%d"),
         "active_module": "sales"
     })
 
@@ -199,14 +226,20 @@ async def edit_quotation_form(request: Request, quot_id: int):
 
 # Placeholder routes for other modules
 @app.get("/purchase", response_class=HTMLResponse)
-async def purchase_dashboard(request: Request):
-    return HTMLResponse("<h1>Purchase Module</h1><p>Under Development for Saudi Arabia Compliance.</p><a href='/'>Back to Home</a>")
+@app.get("/purchase/vendors", response_class=HTMLResponse)
+async def list_vendors(request: Request):
+    # Using direct model query as placeholder
+    from mindzen_erp.modules.purchase.models.vendor import Vendor
+    vendors = Vendor.find_all()
+    return templates.TemplateResponse("purchase/vendors.html", {
+        "request": request,
+        "vendors": vendors,
+        "active_module": "purchase"
+    })
 
 @app.get("/inventory", response_class=HTMLResponse)
 async def inventory_dashboard(request: Request):
-    controller = ProductController(engine)
-    products = controller.list_products()
-    return HTMLResponse(f"<h1>Inventory Module</h1><p>Found {len(products)} products.</p><a href='/'>Back to Home</a>")
+    return RedirectResponse(url="/inventory/products")
 
 @app.get("/finance", response_class=HTMLResponse)
 async def finance_dashboard(request: Request):
