@@ -14,7 +14,8 @@ from mindzen_erp.core.auth_controller import AuthController
 from mindzen_erp.modules.crm.controllers import LeadController
 from mindzen_erp.modules.sales.controllers import SalesOrderController, QuotationController, SalesInvoiceController, CustomerController
 from mindzen_erp.modules.inventory.controllers import ProductController, WarehouseController
-from mindzen_erp.modules.purchase.models.vendor import Vendor # Temporary direct import for placeholder
+from mindzen_erp.core.admin_models import Country, Currency, FinancialYear
+from mindzen_erp.core.tax_models import TaxRegime, TaxType, TaxRate
 
 # Initialize Engine & DB
 engine = Engine()
@@ -147,6 +148,43 @@ async def update_lead(request: Request, lead_id: int):
     controller = LeadController(engine)
     controller.update_lead(lead_id, data)
     return RedirectResponse(url="/crm/leads", status_code=303)
+
+# --- ADMIN & CONFIG ROUTES ---
+@app.get("/admin/config", response_class=HTMLResponse)
+async def system_config(request: Request):
+    countries = Country.find_all()
+    currencies = Currency.find_all()
+    fy = FinancialYear.find_all()
+    return templates.TemplateResponse("admin/config.html", {
+        "request": request,
+        "countries": countries,
+        "currencies": currencies,
+        "financial_years": fy,
+        "active_module": "admin"
+    })
+
+@app.post("/admin/countries")
+async def add_country(request: Request):
+    form_data = await request.form()
+    Country.create(dict(form_data))
+    return RedirectResponse(url="/admin/config", status_code=303)
+
+@app.get("/admin/tax", response_class=HTMLResponse)
+async def tax_engine(request: Request):
+    regimes = TaxRegime.find_all()
+    countries = Country.find_all()
+    return templates.TemplateResponse("admin/tax_engine.html", {
+        "request": request,
+        "regimes": regimes,
+        "countries": countries,
+        "active_module": "admin"
+    })
+
+@app.post("/admin/tax/regimes")
+async def add_tax_regime(request: Request):
+    form_data = await request.form()
+    TaxRegime.create(dict(form_data))
+    return RedirectResponse(url="/admin/tax", status_code=303)
 
 # --- MASTER SCREENS ---
 @app.get("/inventory/products", response_class=HTMLResponse)

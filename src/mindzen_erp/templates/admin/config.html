@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-5 animate-in">
+        <div class="col-md-6">
+            <h1 class="fw-bold text-gradient mb-1">System Configuration</h1>
+            <p class="text-muted">Global settings for Country, Currency, and Financial context.</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="btn-group rounded-pill shadow-sm overflow-hidden">
+                <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#newCountryModal">Add
+                    Country</button>
+                <button class="btn btn-dark px-4" data-bs-toggle="modal" data-bs-target="#newCurrencyModal">Add
+                    Currency</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Ribbons -->
+    <div class="row g-4 mb-5 animate-in" style="animation-delay: 0.1s;">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary text-white">
+                <div class="d-flex align-items-center">
+                    <div class="icon-shape bg-white text-primary rounded-circle me-3">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div>
+                        <div class="small opacity-75">Active Countries</div>
+                        <div class="h4 fw-bold mb-0">{{ countries|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-info text-white">
+                <div class="d-flex align-items-center">
+                    <div class="icon-shape bg-white text-info rounded-circle me-3">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div>
+                        <div class="small opacity-75">Currencies</div>
+                        <div class="h4 fw-bold mb-0">{{ currencies|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-dark text-white">
+                <div class="d-flex align-items-center">
+                    <div class="icon-shape bg-white text-dark rounded-circle me-3">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div>
+                        <div class="small opacity-75">Financial Years</div>
+                        <div class="h4 fw-bold mb-0">{{ financial_years|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Country Section -->
+    <div class="row animate-in" style="animation-delay: 0.2s;">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                <div class="card-header bg-white border-0 py-3 ps-4">
+                    <h5 class="fw-bold mb-0">Registered Countries</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light text-uppercase small fw-bold text-secondary">
+                                <tr>
+                                    <th class="ps-4">Country Name</th>
+                                    <th>Code</th>
+                                    <th>Currency</th>
+                                    <th class="text-end pe-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for country in countries %}
+                                <tr>
+                                    <td class="ps-4 fw-bold text-dark">{{ country.name }}</td>
+                                    <td><code class="text-primary">{{ country.code }}</code></td>
+                                    <td>{{ country.currency.code }} ({{ country.currency.symbol }})</td>
+                                    <td class="text-end pe-4">
+                                        <span
+                                            class="badge {{ 'bg-success-soft text-success' if country.is_active else 'bg-danger-soft text-danger' }} rounded-pill px-3">
+                                            {{ 'Active' if country.is_active else 'Inactive' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                <h5 class="fw-bold mb-3">Financial Periods</h5>
+                {% for fy in financial_years %}
+                <div class="d-flex align-items-center mb-3 p-3 bg-light rounded-3">
+                    <div class="me-auto">
+                        <div class="fw-bold">{{ fy.name }}</div>
+                        <div class="small text-muted">{{ fy.start_date }} - {{ fy.end_date }}</div>
+                    </div>
+                    {% if not fy.is_closed %}
+                    <span class="badge bg-primary rounded-pill">OPEN</span>
+                    {% else %}
+                    <span class="badge bg-secondary rounded-pill">CLOSED</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                <button class="btn btn-outline-primary btn-sm rounded-pill w-100 mt-2">Create New FY</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: New Country -->
+<div class="modal fade" id="newCountryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/admin/countries" method="POST" class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold">Register Country</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Country Name</label>
+                    <input type="text" name="name" class="form-control rounded-3" placeholder="e.g. Saudi Arabia"
+                        required>
+                </div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">ISO Code</label>
+                        <input type="text" name="code" class="form-control rounded-3" placeholder="KSA" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">Main Currency</label>
+                        <select name="currency_id" class="form-select rounded-3">
+                            {% for curr in currencies %}
+                            <option value="{{ curr.id }}">{{ curr.code }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4 pt-0">
+                <button type="submit" class="btn btn-primary w-100 rounded-pill shadow-sm">Save Country</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .icon-shape {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .bg-success-soft {
+        background-color: rgba(16, 185, 129, 0.1);
+    }
+
+    .bg-danger-soft {
+        background-color: rgba(239, 68, 68, 0.1);
+    }
+</style>
+{% endblock %}
