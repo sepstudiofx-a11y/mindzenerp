@@ -12,7 +12,8 @@ from mindzen_erp.core import Engine, ConfigManager
 from mindzen_erp.core.orm import Database
 from mindzen_erp.core.auth_controller import AuthController
 from mindzen_erp.modules.crm.controllers import LeadController
-from mindzen_erp.modules.sales.controllers import SaleController
+from mindzen_erp.modules.sales.controllers import SalesOrderController, QuotationController, SalesInvoiceController
+from mindzen_erp.modules.inventory.controllers import ProductController, WarehouseController
 
 # Initialize Engine & DB
 engine = Engine()
@@ -22,7 +23,7 @@ engine.install_module('crm')
 engine.install_module('sales')
 
 # Database Connection
-db_url = os.getenv("DATABASE_URL", "sqlite:///./mindzen_erp.db")
+db_url = os.getenv("DATABASE_URL", "sqlite:///./mindzen_erp_v2.db")
 Database().connect(db_url)
 
 # Ensure Admin User
@@ -147,11 +148,22 @@ async def update_lead(request: Request, lead_id: int):
     return RedirectResponse(url="/crm/leads", status_code=303)
 
 # --- SALES ROUTES ---
+@app.get("/sales", response_class=HTMLResponse)
 @app.get("/sales/quotations", response_class=HTMLResponse)
 async def list_quotations(request: Request):
-    controller = SaleController(engine)
-    orders = controller.list_orders()
+    controller = QuotationController(engine)
+    quotations = controller.list_quotations()
     return templates.TemplateResponse("sales/quotations.html", {
+        "request": request, 
+        "orders": quotations, # Keeping variable name for template compatibility
+        "active_module": "sales"
+    })
+
+@app.get("/sales/orders", response_class=HTMLResponse)
+async def list_orders(request: Request):
+    controller = SalesOrderController(engine)
+    orders = controller.list_orders()
+    return templates.TemplateResponse("sales/quotations.html", { # Reusing template for now
         "request": request, 
         "orders": orders,
         "active_module": "sales"
@@ -169,25 +181,40 @@ async def new_quotation_form(request: Request):
 async def create_quotation(request: Request):
     form = await request.form()
     data = dict(form)
-    controller = SaleController(engine)
-    controller.create_order(data)
+    # Basic items_data for testing
+    items_data = [] 
+    controller = QuotationController(engine)
+    controller.create_quotation(data, items_data)
     return RedirectResponse(url="/sales/quotations", status_code=303)
 
-@app.get("/sales/quotations/{order_id}", response_class=HTMLResponse)
-async def edit_quotation_form(request: Request, order_id: int):
-    controller = SaleController(engine)
-    order = controller.get_order(order_id)
+@app.get("/sales/quotations/{quot_id}", response_class=HTMLResponse)
+async def edit_quotation_form(request: Request, quot_id: int):
+    controller = QuotationController(engine)
+    quotation = controller.get_quotation(quot_id)
     return templates.TemplateResponse("sales/quotation_form.html", {
         "request": request,
-        "order": order,
+        "order": quotation,
         "active_module": "sales"
     })
 
-@app.post("/sales/quotations/{order_id}/confirm", response_class=HTMLResponse)
-async def confirm_quotation(request: Request, order_id: int):
-    controller = SaleController(engine)
-    controller.confirm_order(order_id)
-    return RedirectResponse(url=f"/sales/quotations/{order_id}", status_code=303)
+# Placeholder routes for other modules
+@app.get("/purchase", response_class=HTMLResponse)
+async def purchase_dashboard(request: Request):
+    return HTMLResponse("<h1>Purchase Module</h1><p>Under Development for Saudi Arabia Compliance.</p><a href='/'>Back to Home</a>")
+
+@app.get("/inventory", response_class=HTMLResponse)
+async def inventory_dashboard(request: Request):
+    controller = ProductController(engine)
+    products = controller.list_products()
+    return HTMLResponse(f"<h1>Inventory Module</h1><p>Found {len(products)} products.</p><a href='/'>Back to Home</a>")
+
+@app.get("/finance", response_class=HTMLResponse)
+async def finance_dashboard(request: Request):
+    return HTMLResponse("<h1>Finance & Zakat Module</h1><p>Saudi Zakat (2.5%) and CIT (20%) calculation engine ready.</p><a href='/'>Back to Home</a>")
+
+@app.get("/production", response_class=HTMLResponse)
+async def production_dashboard(request: Request):
+    return HTMLResponse("<h2>Production Module</h2><p>Plastic Manufacturing Work Orders & BOM.</p><a href='/'>Back to Home</a>")
 
 def start():
     uvicorn.run("mindzen_erp.web:app", host="0.0.0.0", port=8000, reload=True)
