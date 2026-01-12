@@ -1,51 +1,72 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, func
+"""
+Sales Order Model
+"""
+from sqlalchemy import Column, Integer, String, Date, Numeric, Boolean, ForeignKey, Text
 from sqlalchemy.orm import relationship
+from datetime import date
 from mindzen_erp.core.orm import BaseModel
 
-class SaleOrder(BaseModel):
-    __tablename__ = 'sale_orders'
+class SalesOrder(BaseModel):
+    """Sales Order"""
+    __tablename__ = 'sales_orders'
     
-    name = Column(String, nullable=False, unique=True)  # SO001
-    date_order = Column(DateTime(timezone=True), server_default=func.now())
+    id = Column(Integer, primary_key=True)
+    order_no = Column(String(50), unique=True, nullable=False)
+    order_date = Column(Date, default=date.today)
+    customer_id = Column(Integer, ForeignKey('customers.id'), nullable=False)
+    quotation_id = Column(Integer, ForeignKey('quotations.id'))
+    delivery_date = Column(Date)
+    shipping_address_id = Column(Integer, ForeignKey('customer_addresses.id'))
+    status = Column(String(50), default='draft')
+    subtotal = Column(Numeric(15, 2), default=0)
+    discount_percent = Column(Numeric(5, 2), default=0)
+    discount_amount = Column(Numeric(15, 2), default=0)
+    taxable_amount = Column(Numeric(15, 2), default=0)
+    vat_amount = Column(Numeric(15, 2), default=0)
+    total_amount = Column(Numeric(15, 2), default=0)
+    payment_terms = Column(String(100))
+    advance_paid = Column(Numeric(15, 2), default=0)
+    terms_and_conditions = Column(Text)
+    notes = Column(Text)
     
-    # Customer info (simple string for now, would link to Contact module later)
-    customer_name = Column(String, nullable=False)
-    email = Column(String)
+    customer = relationship("Customer")
+    quotation = relationship("Quotation")
+    shipping_address = relationship("CustomerAddress")
+    items = relationship("SalesOrderItem", back_populates="sales_order", cascade="all, delete-orphan")
     
-    # State
-    state = Column(String, default='draft')  # draft, sent, limit, sale, cancel
-    
-    # Totals
-    amount_tax = Column(Float, default=0.0)
-    amount_total = Column(Float, default=0.0)
-    
-    # Relational
-    opportunity_id = Column(Integer, nullable=True)  # Link to CRM
-    
-    # Relationships
-    lines = relationship("SaleOrderLine", back_populates="order", cascade="all, delete-orphan", lazy="selectin")
+    def calculate_totals(self):
+        self.subtotal = sum(item.amount for item in self.items)
+        self.discount_amount = self.subtotal * (self.discount_percent / 100)
+        self.taxable_amount = self.subtotal - self.discount_amount
+        self.vat_amount = sum(item.vat_amount for item in self.items)
+        self.total_amount = self.taxable_amount + self.vat_amount
 
-    def confirm(self):
-        """Confirm quotation to sales order"""
-        self.state = 'sale'
-        self.save()
-        
-    def cancel(self):
-        """Cancel order"""
-        self.state = 'cancel'
-        self.save()
 
-class SaleOrderLine(BaseModel):
-    __tablename__ = 'sale_order_lines'
+class SalesOrderItem(BaseModel):
+    """Sales Order Items"""
+    __tablename__ = 'sales_order_items'
     
-    order_id = Column(Integer, ForeignKey('sale_orders.id'))
+    id = Column(Integer, primary_key=True)
+    sales_order_id = Column(Integer, ForeignKey('sales_orders.id'), nullable=False)
+    product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
+    uom_id = Column(Integer, ForeignKey('uoms.id'), nullable=False)
+    qty = Column(Numeric(12, 2), nullable=False)
+    rate = Column(Numeric(12, 2), nullable=False)
+    amount = Column(Numeric(15, 2), nullable=False)
+    qty_delivered = Column(Numeric(12, 2), default=0)
+    qty_invoiced = Column(Numeric(12, 2), default=0)
+    discount_percent = Column(Numeric(5, 2), default=0)
+    discount_amount = Column(Numeric(12, 2), default=0)
+    vat_rate = Column(Numeric(5, 2), default=15.00)
+    vat_amount = Column(Numeric(12, 2), default=0)
+    description = Column(Text)
     
-    product_name = Column(String, nullable=False)
-    quantity = Column(Float, default=1.0)
-    price_unit = Column(Float, default=0.0)
-    subtotal = Column(Float, default=0.0)
+    sales_order = relationship("SalesOrder", back_populates="items")
+    product = relationship("Product")
+    uom = relationship("UOM")
     
-    order = relationship("SaleOrder", back_populates="lines")
-    
-    def calculate_subtotal(self):
-        self.subtotal = self.quantity * self.price_unit
+    def calculate_amounts(self):
+        self.amount = self.qty * self.rate
+        self.discount_amount = self.amount * (self.discount_percent / 100)
+        taxable = self.amount - self.discount_amount
+        self.vat_amount = taxable * (self.vat_rate / 100)

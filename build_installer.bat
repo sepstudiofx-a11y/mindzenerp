@@ -1,7 +1,7 @@
 
 @echo off
 echo Installing PyInstaller...
-pip install pyinstaller
+python -m pip install pyinstaller
 
 echo Cleaning up previous builds...
 rd /s /q build
@@ -14,7 +14,7 @@ REM --name: Name of the exe
 REM --add-data: Include templates and static files. Format is "source;dest" on Windows.
 REM --hidden-import: Ensure engine and database drivers are included if missed by auto-analysis.
 
-pyinstaller --noconfirm ^
+python -m PyInstaller --noconfirm ^
     --name "MindZenERP" ^
     --onedir ^
     --windowed ^
@@ -31,6 +31,15 @@ pyinstaller --noconfirm ^
     --hidden-import "sqlalchemy.sql.default_comparator" ^
     --hidden-import "mindzen_erp.modules.crm" ^
     --hidden-import "mindzen_erp.modules.sales" ^
+    --hidden-import "itsdangerous" ^
+    --hidden-import "mindzen_erp.core.user" ^
+    --hidden-import "mindzen_erp.core.auth_controller" ^
+    --hidden-import "mindzen_erp.core.config" ^
+    --hidden-import "mindzen_erp.core.engine" ^
+    --hidden-import "mindzen_erp.core.event_bus" ^
+    --hidden-import "mindzen_erp.core.hooks" ^
+    --hidden-import "mindzen_erp.core.module_registry" ^
+    --hidden-import "mindzen_erp.core.orm" ^
     --collect-all "mindzen_erp" ^
     src/run_dist.py
 

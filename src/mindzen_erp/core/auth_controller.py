@@ -3,7 +3,7 @@ Auth Controller
 """
 import logging
 from typing import Optional
-from ..user import User
+from mindzen_erp.core.user import User
 
 logger = logging.getLogger(__name__)
 

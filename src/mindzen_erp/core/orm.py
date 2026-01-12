@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 # Base class for SQLAlchemy models
 SqlBase = declarative_base()
+Base = SqlBase  # Alias for compatibility
 
 class Database:
     """Database connection manager"""
