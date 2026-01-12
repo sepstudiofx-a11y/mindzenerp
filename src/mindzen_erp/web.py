@@ -5,17 +5,27 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
 import uvicorn
 import os
+import sys
+import logging
 from pathlib import Path
-from typing import List, Optional
+from datetime import date, datetime
+from typing import List, Optional, Dict, Any
 
 from mindzen_erp.core import Engine, ConfigManager
 from mindzen_erp.core.orm import Database
 from mindzen_erp.core.auth_controller import AuthController
 from mindzen_erp.modules.crm.controllers import LeadController
-from mindzen_erp.modules.sales.controllers import SalesOrderController, QuotationController, SalesInvoiceController, CustomerController
+from mindzen_erp.modules.sales.controllers import SalesOrderController, QuotationController, CustomerController
+from mindzen_erp.modules.sales.controllers.transaction_controller import SalesInvoiceController, PurchaseInvoiceController
 from mindzen_erp.modules.inventory.controllers import ProductController, WarehouseController
+from mindzen_erp.modules.purchase.models.vendor import Vendor
 from mindzen_erp.core.admin_models import Country, Currency, FinancialYear
 from mindzen_erp.core.tax_models import TaxRegime, TaxType, TaxRate
+from mindzen_erp.modules.finance.models.accounting import Ledger, AccountGroup
+from mindzen_erp.modules.inventory.models.product import Product
+from mindzen_erp.modules.inventory.models.product import Product
+from mindzen_erp.modules.sales.models.customer import Customer
+from mindzen_erp.core.company import Company
 
 # Initialize Engine & DB
 engine = Engine()
@@ -23,6 +33,9 @@ engine.initialize()
 engine.discover_modules()
 engine.install_module('crm')
 engine.install_module('sales')
+engine.install_module('inventory')
+engine.install_module('purchase')
+engine.install_module('finance')
 
 # Database Connection
 db_url = os.getenv("DATABASE_URL", "sqlite:///./mindzen_erp_v2.db")
@@ -50,6 +63,17 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 @app.get("/splash", response_class=HTMLResponse)
 async def splash(request: Request):
     return templates.TemplateResponse("splash.html", {"request": request})
+
+@app.get("/finance/coa", response_class=HTMLResponse)
+async def list_coa(request: Request):
+    ledgers = Ledger.find_all()
+    groups = AccountGroup.find_all()
+    return templates.TemplateResponse("finance/coa.html", {
+        "request": request,
+        "ledgers": ledgers,
+        "groups": groups,
+        "active_module": "finance"
+    })
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
@@ -92,10 +116,14 @@ async def dashboard(request: Request):
     if not user:
         return RedirectResponse(url="/splash") # Start with splash on first load
         
+    company = Company.find_all()
+    current_company = company[0] if company else None
+
     return templates.TemplateResponse("dashboard.html", {
         "request": request, 
         "active_module": "dashboard",
-        "user": user
+        "user": user,
+        "company": current_company
     })
 
 # --- CRM ROUTES ---
@@ -200,6 +228,18 @@ async def list_products(request: Request):
         "active_module": "inventory"
     })
 
+@app.post("/inventory/products")
+async def add_product(request: Request):
+    form_data = await request.form()
+    data = dict(form_data)
+    # Ensure numeric fields are converted
+    if 'sale_rate' in data and data['sale_rate']:
+        data['sale_rate'] = float(data['sale_rate'])
+    if 'vat_rate' in data and data['vat_rate']:
+        data['vat_rate'] = float(data['vat_rate'])
+    Product.create(data)
+    return RedirectResponse(url="/inventory/products", status_code=303)
+
 @app.get("/sales/customers", response_class=HTMLResponse)
 async def list_customers(request: Request):
     controller = CustomerController(engine)
@@ -209,6 +249,12 @@ async def list_customers(request: Request):
         "customers": customers,
         "active_module": "sales"
     })
+
+@app.post("/sales/customers")
+async def add_customer(request: Request):
+    form_data = await request.form()
+    Customer.create(dict(form_data))
+    return RedirectResponse(url="/sales/customers", status_code=303)
 
 # --- SALES ROUTES ---
 @app.get("/sales", response_class=HTMLResponse)
@@ -223,6 +269,27 @@ async def new_invoice_form(request: Request):
         "date_today": date.today().strftime("%Y-%m-%d"),
         "active_module": "sales"
     })
+
+@app.post("/sales/invoices")
+async def create_invoice(request: Request):
+    data = await request.json()
+    invoice_data = {
+        'customer_id': data.get('customer_id'),
+        'invoice_date': date.today(),
+        'status': 'draft',
+        'notes': data.get('notes')
+    }
+    items_data = data.get('items', [])
+    
+    controller = SalesInvoiceController(engine)
+    controller.create_invoice(invoice_data, items_data)
+    
+    return {"status": "success", "message": "Invoice Created"}
+
+@app.get("/sales/invoices", response_class=HTMLResponse)
+async def list_invoices(request: Request):
+    # Reuse quotation list template for now or create new
+    return RedirectResponse(url="/sales")
 
 @app.get("/sales/orders", response_class=HTMLResponse)
 async def list_orders(request: Request):
@@ -266,14 +333,39 @@ async def edit_quotation_form(request: Request, quot_id: int):
 @app.get("/purchase", response_class=HTMLResponse)
 @app.get("/purchase/vendors", response_class=HTMLResponse)
 async def list_vendors(request: Request):
-    # Using direct model query as placeholder
-    from mindzen_erp.modules.purchase.models.vendor import Vendor
     vendors = Vendor.find_all()
     return templates.TemplateResponse("purchase/vendors.html", {
         "request": request,
         "vendors": vendors,
         "active_module": "purchase"
     })
+
+@app.get("/purchase/invoices/new", response_class=HTMLResponse)
+async def new_purchase_invoice_form(request: Request):
+    prod_controller = ProductController(engine)
+    vendors = Vendor.find_all()
+    return templates.TemplateResponse("purchase/invoice_form.html", {
+        "request": request,
+        "products": prod_controller.list_products(),
+        "vendors": vendors,
+        "date_today": date.today().strftime("%Y-%m-%d"),
+        "active_module": "purchase"
+    })
+
+@app.post("/purchase/invoices")
+async def create_purchase_invoice(request: Request):
+    data = await request.json()
+    invoice_data = {
+        'vendor_id': data.get('vendor_id'),
+        'invoice_date': date.today(),
+        'status': 'draft',
+        'notes': data.get('notes')
+    }
+    items_data = data.get('items', [])
+    
+    controller = PurchaseInvoiceController(engine)
+    controller.create_invoice(invoice_data, items_data)
+    return {"status": "success", "message": "Purchase Invoice Created"}
 
 @app.get("/inventory", response_class=HTMLResponse)
 async def inventory_dashboard(request: Request):
@@ -291,4 +383,8 @@ def start():
     uvicorn.run("mindzen_erp.web:app", host="0.0.0.0", port=8000, reload=True)
 
 if __name__ == "__main__":
-    start()
+    try:
+        start()
+    except Exception as e:
+        print(f"CRITICAL ERROR: {e}")
+        input("Press Enter to close...")

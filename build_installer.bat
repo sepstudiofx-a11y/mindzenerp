@@ -34,6 +34,10 @@ python -m PyInstaller --noconfirm ^
     --hidden-import "mindzen_erp.modules.crm" ^
     --hidden-import "mindzen_erp.modules.sales" ^
     --hidden-import "mindzen_erp.modules.inventory" ^
+    --hidden-import "mindzen_erp.modules.finance" ^
+    --hidden-import "mindzen_erp.modules.purchase" ^
+    --hidden-import "mindzen_erp.core.admin_models" ^
+    --hidden-import "mindzen_erp.core.tax_models" ^
     --hidden-import "mindzen_erp.core.company" ^
     --hidden-import "itsdangerous" ^
     --hidden-import "mindzen_erp.core.user" ^

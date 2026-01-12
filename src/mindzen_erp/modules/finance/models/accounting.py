@@ -14,7 +14,7 @@ class AccountGroup(BaseModel):
     parent_id = Column(Integer, ForeignKey('account_groups.id'))
     is_active = Column(Boolean, default=True)
     
-    parent = relationship("AccountGroup", remote_side=[BaseModel.id], backref="children")
+    parent = relationship("AccountGroup", remote_side="[AccountGroup.id]", backref="children")
 
 class Ledger(BaseModel):
     """General Ledger Master"""

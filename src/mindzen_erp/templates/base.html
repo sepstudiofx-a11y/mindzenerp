@@ -12,136 +12,245 @@
         :root {
             --odoo-purple: #714B67;
             --odoo-dark: #017e84;
-            --sidebar-width: 80px;
+            --primary-bg: #f9fafb;
+            --sidebar-width: 90px;
+            --sidebar-bg: #2d3748;
+            --active-item-bg: #4a5568;
+            --accent-color: #319795;
+            /* Teal-500 */
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--primary-bg);
+            color: #2d3748;
         }
 
+        /* Sidebar Styling */
         .sidebar {
-            background-color: #3b4352;
-            color: white;
+            background-color: var(--sidebar-bg);
+            color: #e2e8f0;
             width: var(--sidebar-width);
             height: 100vh;
             position: fixed;
             left: 0;
             top: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
         }
 
         .sidebar-item {
+            width: 100%;
             padding: 15px 0;
             text-align: center;
             cursor: pointer;
-            opacity: 0.8;
+            transition: all 0.2s;
+            color: #cbd5e0;
+            text-decoration: none;
+            border-left: 3px solid transparent;
         }
 
-        .sidebar-item:hover,
+        .sidebar-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
         .sidebar-item.active {
-            background-color: #2b323f;
-            opacity: 1;
-            border-left: 3px solid #00a09d;
+            background-color: var(--active-item-bg);
+            color: white;
+            border-left-color: var(--accent-color);
         }
 
         .sidebar-item i {
-            font-size: 24px;
+            font-size: 22px;
+            margin-bottom: 6px;
             display: block;
-            margin-bottom: 5px;
         }
 
         .sidebar-item span {
-            font-size: 10px;
+            font-size: 11px;
+            font-weight: 500;
             display: block;
         }
 
+        .sidebar-separator {
+            height: 1px;
+            width: 60%;
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 10px 0;
+        }
+
+        .sidebar-item.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Main Content Layout */
         .main-content {
             margin-left: var(--sidebar-width);
-            background: #f9f9f9;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Top Navigation Bar */
         .top-nav {
             background: white;
-            border-bottom: 1px solid #dee2e6;
-            padding: 10px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 30px;
+            height: 60px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            height: 50px;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         .breadcrumb {
-            font-size: 18px;
-            font-weight: 500;
-            color: #444;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* Control Panel (Filters, Group By, Search) */
+        .breadcrumb i {
+            color: #a0aec0;
+            font-size: 0.9rem;
+        }
+
+        /* Control Panel */
         .control-panel {
             background: white;
-            border-bottom: 1px solid #dee2e6;
-            padding: 10px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 15px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
         }
 
         .btn-primary {
             background-color: var(--odoo-purple);
             color: white;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 14px;
+            border-color: var(--odoo-purple);
         }
 
         .btn-primary:hover {
             background-color: #5d3d54;
+            box-shadow: 0 2px 4px rgba(113, 75, 103, 0.3);
         }
 
-        /* Data Tables */
+        .btn-secondary {
+            background-color: white;
+            color: #4a5568;
+            border-color: #cbd5e0;
+        }
+
+        .btn-secondary:hover {
+            background-color: #f7fafc;
+            border-color: #a0aec0;
+        }
+
+        /* Tables (Odoo Style) */
+        .table-container {
+            background: white;
+            margin: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
         .o_list_view {
             width: 100%;
             border-collapse: collapse;
-            background: white;
         }
 
         .o_list_view th {
             text-align: left;
-            padding: 12px;
-            border-bottom: 2px solid #dee2e6;
-            color: #666;
+            padding: 15px 20px;
+            border-bottom: 2px solid #edf2f7;
+            color: #718096;
             font-weight: 600;
-            font-size: 13px;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background-color: #f8fafc;
         }
 
         .o_list_view td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            color: #444;
-            font-size: 13px;
+            padding: 15px 20px;
+            border-bottom: 1px solid #edf2f7;
+            color: #2d3748;
+            font-size: 0.95rem;
+        }
+
+        .o_list_view tr:last-child td {
+            border-bottom: none;
         }
 
         .o_list_view tr:hover {
-            background-color: #f8f9fa;
-            cursor: pointer;
+            background-color: #fbfdff;
         }
 
+        /* Badges */
         .badge {
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
             font-weight: 600;
+            display: inline-block;
         }
 
         .badge-new {
-            background: #e0f2f1;
-            color: #00695c;
+            background: #e6fffa;
+            color: #285e61;
+            border: 1px solid #b2f5ea;
         }
 
         .badge-qualified {
-            background: #e8f5e9;
-            color: #2e7d32;
+            background: #f0fff4;
+            color: #22543d;
+            border: 1px solid #c6f6d5;
+        }
+
+        .badge-won {
+            background: #ebf8ff;
+            color: #2c5282;
+            border: 1px solid #bee3f8;
+        }
+
+        .badge-warning {
+            background: #fffaf0;
+            color: #9c4221;
+            border: 1px solid #feebc8;
+        }
+
+        /* Content Area */
+        .content-area {
+            padding: 20px 30px;
         }
     </style>
 </head>
@@ -154,19 +263,52 @@
             <i class="fa-solid fa-grip-apps"></i>
             <span>Apps</span>
         </a>
-        <!-- CRM Sidebar - Hidden per user request
+        <div class="sidebar-separator"></div>
+
+        <!-- Core Modules -->
+        <a href="/admin/config" class="sidebar-item {% if active_module == 'admin' %}active{% endif %}">
+            <i class="fa-solid fa-cogs"></i>
+            <span>Admin</span>
+        </a>
+        <a href="/admin/tax" class="sidebar-item {% if active_module == 'tax' %}active{% endif %}">
+            <i class="fa-solid fa-calculator"></i>
+            <span>Tax</span>
+        </a>
+        <a href="/finance/coa" class="sidebar-item {% if active_module == 'finance' %}active{% endif %}">
+            <i class="fa-solid fa-book"></i>
+            <span>Finance</span>
+        </a>
+
+        <!-- Operational Modules -->
         <a href="/crm/leads" class="sidebar-item {% if active_module == 'crm' %}active{% endif %}">
             <i class="fa-solid fa-handshake"></i>
             <span>CRM</span>
         </a>
-        -->
-        <div class="sidebar-item">
-            <i class="fa-solid fa-boxes-stacked"></i>
-            <span>Inventory</span>
-        </div>
         <a href="/sales/quotations" class="sidebar-item {% if active_module == 'sales' %}active{% endif %}">
             <i class="fa-solid fa-file-invoice-dollar"></i>
             <span>Sales</span>
+        </a>
+        <a href="/purchase/vendors" class="sidebar-item {% if active_module == 'purchase' %}active{% endif %}">
+            <i class="fa-solid fa-truck-loading"></i>
+            <span>Purchase</span>
+        </a>
+        <a href="/inventory/products" class="sidebar-item {% if active_module == 'inventory' %}active{% endif %}">
+            <i class="fa-solid fa-boxes-stacked"></i>
+            <span>Inventory</span>
+        </a>
+
+        <!-- Future Modules (Placeholders) -->
+        <a href="#" class="sidebar-item disabled" title="Coming Soon">
+            <i class="fa-solid fa-industry"></i>
+            <span>Mfg</span>
+        </a>
+        <a href="#" class="sidebar-item disabled" title="Coming Soon">
+            <i class="fa-solid fa-users"></i>
+            <span>HR</span>
+        </a>
+        <a href="#" class="sidebar-item disabled" title="Coming Soon">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Report</span>
         </a>
     </div>
 

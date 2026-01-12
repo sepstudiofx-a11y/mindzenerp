@@ -1,0 +1,11 @@
+{
+    "name": "finance",
+    "version": "1.0.0",
+    "description": "Finance, Accounting, and Zakat Management",
+    "author": "MindZen",
+    "depends": [
+        "sales",
+        "purchase"
+    ],
+    "data": []
+}

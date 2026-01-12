@@ -7,8 +7,8 @@
         <div class="card-body p-4 p-lg-5">
             <div class="row align-items-center mb-4">
                 <div class="col-6">
-                    <h1 class="h2 fw-bold text-gradient mb-0">Sales Invoice</h1>
-                    <p class="text-muted mb-0">Saudi Arabia Tax Invoice (Zakat Compliant)</p>
+                    <h1 class="h2 fw-bold text-gradient mb-0">Purchase Invoice</h1>
+                    <p class="text-muted mb-0">Vendor Bill Entry (Zakat Compliant)</p>
                 </div>
                 <div class="col-6 text-end">
                     <div class="d-inline-flex align-items-center bg-light rounded-pill px-3 py-2">
@@ -18,36 +18,31 @@
                 </div>
             </div>
 
-            <form id="invoiceForm">
+            <form id="purchaseForm">
                 <div class="row g-4 mb-5">
                     <div class="col-md-6">
                         <div class="p-4 bg-light rounded-4 h-100">
-                            <label class="form-label small fw-bold text-uppercase text-secondary mb-3">Customer
+                            <label class="form-label small fw-bold text-uppercase text-secondary mb-3">Vendor
                                 Details</label>
-                            <select id="customerSelect"
+                            <select id="vendorSelect"
                                 class="form-select form-select-lg border-0 shadow-sm rounded-3 mb-3">
-                                <option value="">Select Customer...</option>
-                                {% for customer in customers %}
-                                <option value="{{ customer.id }}" data-vat="{{ customer.vat_no }}">{{ customer.name }}
-                                </option>
+                                <option value="">Select Vendor...</option>
+                                {% for vendor in vendors %}
+                                <option value="{{ vendor.id }}">{{ vendor.name }}</option>
                                 {% endfor %}
                             </select>
-                            <div id="customerVatInfo" class="small text-muted d-none">
-                                <i class="fas fa-id-card me-1"></i> VAT No: <span class="fw-bold text-dark"
-                                    id="vatDisplay"></span>
-                            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="p-4 bg-light rounded-4 h-100">
-                            <label class="form-label small fw-bold text-uppercase text-secondary mb-3">Billing
+                            <label class="form-label small fw-bold text-uppercase text-secondary mb-3">Payment
                                 Options</label>
                             <div class="row g-3">
                                 <div class="col-6">
-                                    <label class="small text-muted mb-1">Invoice Type</label>
+                                    <label class="small text-muted mb-1">Bill Type</label>
                                     <select class="form-select border-0 shadow-sm rounded-3">
-                                        <option>Regular Tax Invoice</option>
-                                        <option>Simplified Tax Invoice</option>
+                                        <option>Standard Bill</option>
+                                        <option>Expense Voucher</option>
                                     </select>
                                 </div>
                                 <div class="col-6">
@@ -71,7 +66,7 @@
                                 <th style="width: 40%;">Product / Description</th>
                                 <th style="width: 15%;">UOM</th>
                                 <th style="width: 15%;">Qty</th>
-                                <th style="width: 15%;">Rate (SAR)</th>
+                                <th style="width: 15%;">Cost (SAR)</th>
                                 <th style="width: 15%;" class="text-end">Amount</th>
                                 <th style="width: 50px;"></th>
                             </tr>
@@ -82,7 +77,7 @@
                                     <select class="form-select product-select border-0 bg-transparent fw-bold p-0 mb-1">
                                         <option value="">Choose Item...</option>
                                         {% for product in products %}
-                                        <option value="{{ product.id }}" data-rate="{{ product.sale_rate }}">{{
+                                        <option value="{{ product.id }}" data-rate="{{ product.cost_rate or 0 }}">{{
                                             product.name }}</option>
                                         {% endfor %}
                                     </select>
@@ -116,7 +111,7 @@
                 <div class="row pt-4 border-top">
                     <div class="col-md-6">
                         <textarea class="form-control border-0 bg-light rounded-4 p-3" rows="3"
-                            placeholder="Notes or Terms..."></textarea>
+                            placeholder="Bill Notes..."></textarea>
                     </div>
                     <div class="col-md-5 offset-md-1">
                         <div class="d-flex justify-content-between mb-2">
@@ -124,15 +119,15 @@
                             <span class="fw-bold fs-5" id="subtotal">SAR 0.00</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Tax (15%)</span>
+                            <span class="text-muted">VAT (15%)</span>
                             <span class="fw-bold text-primary" id="taxAmount">SAR 0.00</span>
                         </div>
                         <div class="d-flex justify-content-between mb-3 pt-3 border-top">
-                            <span class="h4 fw-bold">TOTAL</span>
+                            <span class="h4 fw-bold">TOTAL PAYABLE</span>
                             <span class="h4 fw-bold text-gradient" id="grandTotal">SAR 0.00</span>
                         </div>
                         <button type="submit" class="btn btn-primary w-100 rounded-pill btn-lg shadow-sm">
-                            Generate & Print Bill <i class="fas fa-print ms-2"></i>
+                            Save Purchase Invoice <i class="fas fa-save ms-2"></i>
                         </button>
                     </div>
                 </div>
@@ -193,27 +188,16 @@
             });
         }
 
-        document.getElementById('customerSelect').addEventListener('change', function () {
-            const vat = this.options[this.selectedIndex].getAttribute('data-vat');
-            const display = document.getElementById('customerVatInfo');
-            if (vat) {
-                display.classList.remove('d-none');
-                document.getElementById('vatDisplay').textContent = vat;
-            } else {
-                display.classList.add('d-none');
-            }
-        });
-
-        document.getElementById('invoiceForm').addEventListener('submit', async function (e) {
+        document.getElementById('purchaseForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
             const submitBtn = this.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
 
-            const customerId = document.getElementById('customerSelect').value;
-            if (!customerId) {
-                alert("Please select a customer");
+            const vendorId = document.getElementById('vendorSelect').value;
+            if (!vendorId) {
+                alert("Please select a vendor");
                 submitBtn.disabled = false;
                 return;
             }
@@ -224,7 +208,7 @@
                 if (prodId) {
                     items.push({
                         product_id: parseInt(prodId),
-                        uom_id: 1, // Defaulting to Piece for now
+                        uom_id: 1,
                         qty: parseFloat(row.querySelector('.qty-input').value),
                         rate: parseFloat(row.querySelector('.rate-input').value)
                     });
@@ -238,21 +222,21 @@
             }
 
             const payload = {
-                customer_id: parseInt(customerId),
+                vendor_id: parseInt(vendorId),
                 notes: document.querySelector('textarea').value,
                 items: items
             };
 
             try {
-                const response = await fetch('/sales/invoices', {
+                const response = await fetch('/purchase/invoices', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
-                    alert("Invoice Created Successfully!");
-                    window.location.href = '/sales';
+                    alert("Purchase Invoice Created Successfully!");
+                    window.location.href = '/purchase';
                 } else {
                     alert("Error saving invoice");
                 }
@@ -261,7 +245,7 @@
                 alert("Network error");
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Generate & Print Bill <i class="fas fa-print ms-2"></i>';
+                submitBtn.innerHTML = 'Save Purchase Invoice <i class="fas fa-save ms-2"></i>';
             }
         });
 
@@ -271,55 +255,19 @@
 
 <style>
     .text-gradient {
-        background: linear-gradient(45deg, #1e40af, #3b82f6);
+        background: linear-gradient(45deg, #10b981, #34d399);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
 
-    .bg-primary-soft {
-        background-color: rgba(59, 130, 246, 0.1);
-    }
-
-    .bg-info-soft {
-        background-color: rgba(6, 182, 212, 0.1);
-    }
-
     .btn-light-primary {
-        background-color: rgba(59, 130, 246, 0.05);
-        color: #1e40af;
+        background-color: rgba(16, 185, 129, 0.05);
+        color: #059669;
         border: none;
     }
 
     .btn-light-primary:hover {
-        background-color: rgba(59, 130, 246, 0.1);
-    }
-
-    .animate-in {
-        animation: fadeIn 0.5s ease-out forwards;
-        opacity: 0;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    input::-webkit-outer-spin-button,
-    input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    .rate-input,
-    .qty-input {
-        outline: none;
+        background-color: rgba(16, 185, 129, 0.1);
     }
 </style>
 {% endblock %}
